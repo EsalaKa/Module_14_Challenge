@@ -1,0 +1,204 @@
+<
+!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive Web Visualizations Dashboard</title>
+    <!-- D3 and Plotly libraries -->
+    <script src="https://d3js.org/d3.v5.min.js"></script>
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            margin: 20px;
+        }
+
+        #header {
+            text-align: center;
+            font-size: 24px;
+            margin-bottom: 20px;
+        }
+
+        #charts {
+            display: flex;
+            justify-content: space-between;
+        }
+
+        #bar, #bubble {
+            width: 45%;
+        }
+
+        #metadata {
+            margin-top: 20px;
+            padding: 20px;
+            border: 1px solid lightblue;
+            
+        }
+
+        /*  Within the metadata, style for the table */
+        table {
+            width: 20%;
+            margin-top: 10px;
+        }
+
+        /* Style for the table cells */
+        td, th {
+            border: 1px solid black;
+            padding: 3px;
+            text-align: left;
+            max-width: 100px; 
+        }
+
+        /* Style for the table header cells */
+        th {
+            background-color: white;
+        }
+    </style>
+</head>
+<body>
+
+<!-- Header -->
+<div id="header">
+    <h1>Interactive Web Visualizations Dashboard</h1>
+    <p style="font-size: 16px; margin-top: -10px;">Use interactive charts below to explore the dataset</p>
+</div>
+</div>
+
+<!-- Create a dropdown menu -->
+<!-- Task 1 (of 6 tasks): Use D3 to load 'samples.json' -->
+<label for="selDataset">Select Individual:</label>
+<select id="selDataset"></select>
+
+<!-- Display sample metadata -->
+<!-- Task 4(of 6 tasks): Display  -->
+<div id="metadata"></div>
+
+<!-- Create  charts -->
+<div id="charts">
+    <!-- Task 2(of 6 tasks): Horizontal bar chart with dropdown -->
+    <div id="bar"></div>
+    <!-- Task 3(of 6 tasks): Bubble chart -->
+    <div id="bubble"></div>
+</div>
+
+<script>
+
+// Task 1(of 6 tasks): Use D3 to load samples.json
+d3.json("https://2u-data-curriculum-team.s3.amazonaws.com/dataviz-classroom/v1.1/14-Interactive-Web-Visualizations/02-Homework/samples.json").then(function(data) {
+    // Extract the required data from the JSON
+    var samples = data.samples;
+    var names = data.names;
+    var metadata = data.metadata;
+
+    // Dropdown menu
+    var dropdown = d3.select("#selDataset");
+
+    // Dropdown options
+    names.forEach(function(name, index) {
+        dropdown.append("option")
+            .attr("value", index)
+            .text(name);
+    });
+
+    
+    // Task 6(of 6 tasks): Update all plots when a new sample is selected
+    updateDashboard(0);
+
+    
+    function updateDashboard(index) {
+        // Update bar chart
+        var sample = samples[index];
+        var top10Sample = sample.sample_values.slice(0, 10).reverse();
+        var top10OTUIds = sample.otu_ids.slice(0, 10).reverse();
+        var top10OLabels = sample.otu_labels.slice(0, 10).reverse();
+
+        var traceBar = {
+            x: top10Sample,
+            y: top10OTUIds.map(otuId => `OTU ${otuId}`),
+            text: top10OLabels,
+            type: "bar",
+            orientation: "h"
+        };
+
+        var dataBar = [traceBar];
+
+        var layoutBar = {
+    
+            xaxis: { title: "Sample Values" },
+            yaxis: { title: "OTU IDs" }
+
+        };
+
+        Plotly.newPlot("bar", dataBar, layoutBar);
+
+        // Update bubble chart
+        var traceBubble = {
+            x: sample.otu_ids,
+            y: sample.sample_values,
+            text: sample.otu_labels,
+            mode: 'markers',
+            marker: {
+                size: sample.sample_values,
+                color: sample.otu_ids,
+                colorscale: 'Viridis'
+            }
+        };
+
+        var Bubble = [traceBubble];
+
+        var BubbleLayout = {
+            
+            xaxis: { title: "OTU IDs" },
+            yaxis: { title: "Sample Values" }
+        };
+
+        Plotly.newPlot("bubble", Bubble, BubbleLayout);
+
+        // Display sample metadata
+        // Task 5(of 6 tasks): Display each key-value pair from metadata JSON
+        dataDisplay(index);
+    }
+
+    
+    function dataDisplay(index) {
+        var metadataS = d3.select("#metadata");
+        metadataS.html(""); 
+
+        var selecteddata = metadata[index];
+
+        // Create a table to display key-value pairs
+        var table = metadataS.append("table");
+        var tbody = table.append("tbody");
+
+        // Create table header
+        var thead = table.append("thead");
+        var headerRow = thead.append("tr");
+        
+
+        // Task 5(of 6 tasks): Display each key-value pair from metadata JSON
+        var demographic = tbody.append("tr");
+demographic.append("th").attr("colspan", 2).text("Demographic Info");
+        Object.entries(selecteddata).forEach(([key, value]) => {
+            var row = tbody.append("tr");
+            row.append("td").text(key);
+            row.append("td").text(value);
+        });
+
+       
+    }
+        // Dropdown change
+        dropdown.on("change", function() {
+        var selectedIndex = this.value;
+    
+        // Task 6(of 6 tasks): Update all plots when a new sample is selected
+        updateDashboard(selectedIndex);
+    });
+});
+</script>
+
+</body>
+</html>
+
+
+
